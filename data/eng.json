@@ -1,0 +1,19 @@
+[
+  {
+    "num": 1,
+    "question": "Выберите правильный вариант перевода: 'Hello!'",
+    "parsed_options": [
+      {"letter": "A", "text": "Привет!"},
+      {"letter": "B", "text": "Пока!"},
+      {"letter": "C", "text": "Спасибо!"},
+      {"letter": "D", "text": "Да!"}
+    ],
+    "correct_letters": ["A"],
+    "correct": "A) Привет!",
+    "points": "1",
+    "topic": "Приветствия",
+    "type": "single",
+    "has_formula_images": false,
+    "context": ""
+  }
+]

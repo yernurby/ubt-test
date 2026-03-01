@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Диагностический тест ЕНТ</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c26;
+    --surface2: #1e2333;
+    --border: #2a3045;
+    --accent: #4f8ef7;
+    --accent2: #7c5cfc;
+    --green: #22d3a5;
+    --red: #f04f5a;
+    --yellow: #f5c842;
+    --text: #e8eaf0;
+    --text2: #8b91a8;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .header-info {
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .timer {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(79,142,247,0.12);
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(79,142,247,0.25);
+  }
+  .timer.warning { color: var(--yellow); border-color: rgba(245,200,66,0.3); background: rgba(245,200,66,0.1); }
+  .timer.danger { color: var(--red); border-color: rgba(240,79,90,0.3); background: rgba(240,79,90,0.1); }
+  
+  /* WELCOME SCREEN */
+  .welcome-wrap {
+    max-width: 720px;
+    margin: 60px auto;
+    padding: 0 24px;
+  }
+  .welcome-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(26px, 5vw, 40px);
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .welcome-sub {
+    color: var(--text2);
+    font-size: 16px;
+    margin-bottom: 48px;
+  }
+  .variants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .variant-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .variant-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(79,142,247,0.06), rgba(124,92,252,0.06));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .variant-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .variant-card:hover::before { opacity: 1; }
+  .variant-card.selected { border-color: var(--accent); background: rgba(79,142,247,0.08); }
+  .variant-card.selected::before { opacity: 1; }
+  .variant-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .variant-subjects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .subject-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .badge-math { background: rgba(79,142,247,0.18); color: #7eb8ff; }
+  .badge-physics { background: rgba(245,200,66,0.18); color: #f9d96e; }
+  .badge-geo { background: rgba(34,211,165,0.18); color: #4de8c0; }
+  .badge-history { background: rgba(240,79,90,0.18); color: #ff8b93; }
+  .badge-matgram { background: rgba(124,92,252,0.18); color: #b49dff; }
+  .badge-eng { background: rgba(255,140,90,0.18); color: #ffab73; }
+  
+  .btn-start {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 16px 40px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 24px rgba(79,142,247,0.3);
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(79,142,247,0.4); }
+  .btn-start:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* INFO BOX */
+  .info-box {
+    background: rgba(79,142,247,0.08);
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 32px;
+    font-size: 14px;
+    color: var(--text2);
+  }
+  .info-box strong { color: var(--text); }
+
+  /* QUIZ SCREEN */
+  .quiz-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 57px);
+  }
+  
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    overflow-y: auto;
+    position: sticky;
+    top: 57px;
+    height: calc(100vh - 57px);
+  }
+  .sidebar-subject {
+    margin-bottom: 20px;
+  }
+  .sidebar-subject-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--text2);
+    margin-bottom: 10px;
+    padding: 0 4px;
+  }
+  .q-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+  }
+  .q-btn {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .q-btn:hover { border-color: var(--accent); color: var(--text); }
+  .q-btn.answered { background: rgba(79,142,247,0.2); border-color: var(--accent); color: var(--accent); }
+  .q-btn.current { background: var(--accent); border-color: var(--accent); color: #fff; }
+  
+  /* MAIN QUESTION AREA */
+  .question-area {
+    padding: 40px;
+    max-width: 900px;          /* было 780 → увеличил */
+    margin: 0 auto;            /* добавь, чтобы центрировалось */
+    width: 100%;
+  }
+  .subject-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .subject-label {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+  .q-progress-text {
+    color: var(--text2);
+    font-size: 13px;
+    margin-left: auto;
+  }
+  
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+  .question-num {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .question-text {
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 24px;
+    white-space: pre-line;
+  }
+  .context-box {
+    background: rgba(124,92,252,0.07);
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .context-box strong { color: var(--text); font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+  .context-box img {
+    max-width: 100% !important; /* Картинка не может быть шире контейнера */
+    height: auto !important;     /* Сохраняем пропорции, чтобы не сплющило */
+    display: block;              /* Убираем лишние отступы снизу */
+    margin: 10px auto;           /* Центрируем картинку */
+    border-radius: 8px;          /* При желании — скругление */
+}
+  
+  .formula-notice {
+    background: rgba(245,200,66,0.08);
+    border: 1px solid rgba(245,200,66,0.25);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #f5c842;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* OPTIONS */
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .option-item:hover { border-color: var(--accent); background: rgba(79,142,247,0.06); }
+  .option-item.selected { border-color: var(--accent); background: rgba(79,142,247,0.12); }
+  .option-item.selected .opt-letter { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .option-item.multi-selected { border-color: var(--accent2); background: rgba(124,92,252,0.12); }
+  .option-item.multi-selected .opt-letter { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+  .opt-letter {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    color: var(--text2);
+  }
+  .opt-text {
+    font-size: 15px;
+    line-height: 1.5;
+    padding-top: 3px;
+  }
+  /* Эффект затухания, когда выбрано 3 ответа */
+  .options-list.max-reached .option-item {
+    opacity: 0.4;         /* Делаем невыбранные варианты тусклыми */
+    filter: grayscale(0.6); /* Немного обесцвечиваем */
+    cursor: not-allowed;    /* Меняем курсор, чтобы показать, что нажать нельзя */
+    pointer-events: none;   /* Отключаем клики по невыбранным элементам */
+  }
+
+  /* Выбранные варианты остаются яркими и кликабельными (чтобы их можно было отменить) */
+  .options-list.max-reached .option-item.multi-selected {
+    opacity: 1;
+    filter: none;
+    cursor: pointer;
+    pointer-events: auto;
+    border-color: var(--accent2);
+  }
+
+  /* Добавляем плавность перехода, чтобы затухание не было резким */
+  .option-item {
+    transition: all 0.3s ease;
+  }
+
+  /* MATCHING TYPE */
+  .matching-note {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 14px;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    white-space: pre-wrap;
+  }
+  .matching-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .matching-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .matching-label { 
+    font-size: 15px; 
+    min-width: 30px; /* Фиксированная ширина для номера задания */
+    font-weight: 500; 
+  }
+  .matching-select {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: 'Golos Text', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+    flex: 1;
+  }
+  .matching-select:focus { border-color: var(--accent); }
+
+  /* NAVIGATION */
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .btn-nav {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-next {
+    margin-left: auto;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-next:hover { background: #3a7de8; border-color: #3a7de8; color: #fff; }
+  .btn-finish {
+    margin-left: auto;
+    background: linear-gradient(135deg, var(--green), #16c79a);
+    border-color: var(--green);
+    color: #fff;
+    font-weight: 600;
+  }
+  .btn-finish:hover { opacity: 0.9; color: #fff; }
+  .topic-tag {
+    font-size: 12px;
+    color: var(--text2);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* RESULTS SCREEN */
+  .results-wrap {
+    max-width: 1100px;         /* было 900 → увеличил */
+    margin: 0 auto;
+    padding: 40px 24px;
+    width: 100%;
+  }
+  .results-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff, var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .results-sub {
+    color: var(--text2);
+    margin-bottom: 40px;
+  }
+  
+  .subject-result {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .subject-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .subject-result-name {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .score-badge {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .score-fraction {
+    font-size: 13px;
+    color: var(--text2);
+    font-family: 'Golos Text', sans-serif;
+    font-weight: 400;
+  }
+  .progress-bar-wrap {
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  }
+  .fill-green { background: linear-gradient(90deg, var(--green), #16c79a); }
+  .fill-yellow { background: linear-gradient(90deg, var(--yellow), #e8b800); }
+  .fill-red { background: linear-gradient(90deg, var(--red), #d03840); }
+  .fill-blue { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  
+  .topics-breakdown {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+  .topics-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text2);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .topic-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(42,48,69,0.6);
+    font-size: 14px;
+  }
+  .topic-row:last-child { border-bottom: none; }
+  .topic-name { flex: 1; color: var(--text2); }
+  .topic-score {
+    font-weight: 600;
+    min-width: 55px;
+    text-align: right;
+  }
+  .topic-mini-bar {
+    width: 80px;
+    height: 5px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .topic-mini-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+  }
+  .score-perfect { color: var(--green); }
+  .score-good { color: var(--accent); }
+  .score-avg { color: var(--yellow); }
+  .score-low { color: var(--red); }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+  .summary-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .summary-label {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .btn-restart {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 32px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-restart:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* CONFIRM MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 36px;
+    max-width: 440px;
+    width: 90%;
+    text-align: center;
+  }
+  .modal-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .modal-text { color: var(--text2); margin-bottom: 28px; font-size: 15px; }
+  .modal-btns { display: flex; gap: 12px; justify-content: center; }
+  .btn-cancel {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .btn-confirm {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, var(--green), #16c79a);
+    color: #fff;
+    font-family: 'Golos Text', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  @media (max-width: 768px) {
+    .quiz-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .question-area { padding: 20px; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']]
+    }
+  };
+</script>
+</head>
+<body>
+
+<header>
+  <img src="weglobal_sign.png" alt="Weglobal" style="height: 40px; width: auto;">
+  <div class="header-info">
+    <div class="timer" id="timerDisplay" style="display:none">00:00</div>
+  </div>
+</header>
+
+<!-- WELCOME SCREEN -->
+<div class="screen active" id="welcomeScreen">
+  <div class="welcome-wrap">
+    <div class="welcome-title">Диагностический тест ЕНТ</div>
+    <div class="welcome-sub">Выберите профильные предметы и начните тест. По завершении вы получите полный анализ по каждому предмету и теме.</div>
+    
+    <div class="info-box">
+      <strong>Обязательные предметы</strong> — <strong>История Казахстана</strong> и <strong>Математическая грамотность</strong> включены во все варианты автоматически.
+    </div>
+    
+    <div class="variants-grid" id="variantsGrid"></div>
+    
+    <button class="btn-start" id="startBtn" disabled onclick="showUserInfoScreen()">
+      Начать тест →
+    </button>
+  </div>
+</div>
+
+<!-- USER INFO SCREEN -->
+<div class="screen" id="userInfoScreen">
+  <div class="welcome-wrap" style="max-width: 500px;">
+    <div class="welcome-title" style="font-size: clamp(24px, 5vw, 36px);">Ваши данные</div>
+    <div class="welcome-sub" style="margin-bottom: 32px;">
+      Пожалуйста, введите ФИО и номер телефона
+    </div>
+
+    <div style="margin: 24px 0;">
+      <label for="studentName" style="display:block; margin-bottom:8px; color:var(--text); font-weight:500;">
+        ФИО ученика *
+      </label>
+      <input type="text" id="studentName" placeholder="Булатов Булат Булатович" 
+            style="width:100%; padding:14px; border-radius:10px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:16px;">
+    </div>
+
+    <div style="margin: 24px 0;">
+      <label for="phoneNumber" style="display:block; margin-bottom:8px; color:var(--text); font-weight:500;">
+        Номер телефона *
+      </label>
+      <input type="tel" id="phoneNumber" placeholder="+7 (XXX) XXX-XX-XX" maxlength="18"
+            style="width:100%; padding:14px; border-radius:10px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:16px;">
+    </div>
+
+    <button class="btn-start" id="continueBtn" disabled onclick="startAfterUserInfo()">
+      Продолжить →
+    </button>
+
+    <button class="btn-nav" onclick="backToVariants()" style="margin-top:16px;">
+      ← Назад к выбору предметов
+    </button>
+  </div>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div class="screen" id="quizScreen">
+  <div class="quiz-layout">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="question-area" id="questionArea"></div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div class="screen" id="resultsScreen">
+  <div class="results-wrap" id="resultsContent"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="finishModal">
+  <div class="modal-box">
+    <div class="modal-title">Завершить тест?</div>
+    <div class="modal-text" id="modalText"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Продолжить</button>
+      <button class="btn-confirm" onclick="finishTest()">Завершить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DATA ====================
+// Глобальная переменная для вопросов (будет заполнена после загрузки)
+let QUESTIONS = {};
+
+// Функция загрузки всех JSON-файлов один раз при запуске
+async function loadQuestions() {
+  try {
+    const subjects = ['math', 'physics', 'geo', 'history', 'matgram', 'eng'];
+    
+    for (const subj of subjects) {
+      const response = await fetch(`data/${subj}.json`);
+      if (!response.ok) {
+        throw new Error(`Ошибка загрузки ${subj}.json: ${response.status}`);
+      }
+      QUESTIONS[subj] = await response.json();
+    }
+    
+    console.log("Все вопросы успешно загружены!");
+    renderVariants();  // Теперь запускаем интерфейс с вариантами
+  } catch (error) {
+    console.error("Проблема с загрузкой вопросов:", error);
+    alert("Не удалось загрузить вопросы из папки data/. Проверьте файлы и Live Server.");
+  }
+}
+
+// Запускаем загрузку сразу при открытии страницы
+loadQuestions();
+const VARIANTS = [
+  {
+    id: 'math_physics',
+    label: 'Математика — Физика',
+    elective: ['math', 'physics'],
+    required: ['history', 'matgram']
+  },
+  {
+    id: 'math_geo',
+    label: 'Математика — География',
+    elective: ['math', 'geo'],
+    required: ['history', 'matgram']
+  },
+  {
+    id: 'geo_eng',
+    label: 'География — Английский',
+    elective: ['geo', 'eng'],          // eng — новый предмет
+    required: ['history', 'matgram']
+  }
+];
+
+const SUBJECT_INFO = {
+  math: { name: 'Математика', color: '#4f8ef7', badgeClass: 'badge-math', totalQ: 40 },
+  physics: { name: 'Физика', color: '#f5c842', badgeClass: 'badge-physics', totalQ: 40 },
+  geo: { name: 'География', color: '#22d3a5', badgeClass: 'badge-geo', totalQ: 40 },
+  history: { name: 'История Казахстана', color: '#f04f5a', badgeClass: 'badge-history', totalQ: 20 },
+  matgram: { name: 'Матем. грамотность', color: '#7c5cfc', badgeClass: 'badge-matgram', totalQ: 10 }, 
+  eng: { name: 'Английский язык', color: '#ff9500', badgeClass: 'badge-eng', totalQ: 40 }
+};
+
+// ==================== STATE ====================
+let selectedVariant = null;
+let testSubjects = []; // ordered list of subject keys
+let allQuestions = []; // flat list of {subject, question, globalIndex}
+let answers = {}; // globalIndex -> answer (letter or array of letters)
+let currentIndex = 0;
+let timerInterval = null;
+let startTime = null;
+let totalSeconds = 0;
+let globalTimeStr = '';
+let globalTotalEarned = 0;
+let globalTotalMax = 0;
+let globalAnsweredCount = 0;
+let globalSubjectResults = {}; // ← новая глобальная переменная для результатов по предметам
+
+// ==================== WELCOME ====================
+function renderVariants() {
+  const grid = document.getElementById('variantsGrid');
+  grid.innerHTML = '';
+
+  VARIANTS.forEach((v, i) => {
+    const allSubjects = [...v.elective, ...v.required];
+    const card = document.createElement('div');
+    card.className = 'variant-card';
+    card.onclick = () => selectVariant(i);
+    card.id = `variant-card-${i}`;
+
+    // Бейджи предметов
+    const badges = allSubjects.map(s => {
+      const info = SUBJECT_INFO[s] || { name: s, badgeClass: 'badge-eng' }; // для eng добавим позже
+      const isReq = v.required.includes(s);
+      return `<span class="subject-badge ${info.badgeClass}">${info.name}${isReq ? ' ✦' : ''}</span>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div style="font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--accent);">
+        ${v.label}
+      </div>
+      <div class="variant-subjects">${badges}</div>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+function selectVariant(idx) {
+  selectedVariant = idx;
+  document.querySelectorAll('.variant-card').forEach((c, i) => {
+    c.classList.toggle('selected', i === idx);
+  });
+  document.getElementById('startBtn').disabled = false;
+}
+
+// ==================== TEST START ====================
+function startTest() {
+  if (selectedVariant === null) return;
+  const variant = VARIANTS[selectedVariant];
+  
+  testSubjects = [...variant.elective, ...variant.required];
+  allQuestions = [];
+  answers = {};
+  
+  testSubjects.forEach(subj => {
+    const qs = QUESTIONS[subj] || [];
+    qs.forEach(q => {
+      allQuestions.push({ subject: subj, question: q });
+    });
+  });
+  
+  currentIndex = 0;
+  startTime = Date.now();
+  totalSeconds = 0;
+  
+  showScreen('quizScreen');
+  renderSidebar();
+  renderQuestion(0);
+  startTimer();
+}
+
+function startTimer() {
+  const display = document.getElementById('timerDisplay');
+  display.style.display = 'block';
+  timerInterval = setInterval(() => {
+    totalSeconds++;
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    const text = h > 0
+      ? `${pad(h)}:${pad(m)}:${pad(s)}`
+      : `${pad(m)}:${pad(s)}`;
+    display.textContent = text;
+  }, 1000);
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+// ==================== SIDEBAR ====================
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  let html = '';
+  let globalIdx = 0;
+  
+  testSubjects.forEach(subj => {
+    const subjInfo = SUBJECT_INFO[subj];
+    const qs = QUESTIONS[subj] || [];
+    html += `<div class="sidebar-subject">
+      <div class="sidebar-subject-title" style="color:${subjInfo.color}">${subjInfo.name}</div>
+      <div class="q-grid">`;
+    qs.forEach((q, qi) => {
+      const gi = globalIdx;
+      const isAnswered = answers[gi] !== undefined;
+      html += `<button class="q-btn" id="qbtn-${gi}" onclick="goToQuestion(${gi})">${q.num}</button>`;
+      globalIdx++;
+    });
+    html += `</div></div>`;
+  });
+  
+  sb.innerHTML = html;
+  updateSidebar();
+}
+
+function updateSidebar() {
+  allQuestions.forEach((item, gi) => {
+    const btn = document.getElementById(`qbtn-${gi}`);
+    if (!btn) return;
+    btn.className = 'q-btn';
+    if (gi === currentIndex) btn.classList.add('current');
+    else if (answers[gi] !== undefined) btn.classList.add('answered');
+  });
+}
+
+// ==================== QUESTION RENDER ====================
+function renderQuestion(idx) {
+  currentIndex = idx;
+  updateSidebar();
+  
+  const { subject, question: q } = allQuestions[idx];
+  const subjInfo = SUBJECT_INFO[subject];
+  const isLast = idx === allQuestions.length - 1;
+  const answeredCount = Object.keys(answers).length;
+  
+  let html = `
+    <div class="subject-header">
+      <span class="subject-label ${subjInfo.badgeClass}" style="background:rgba(${hexToRgb(subjInfo.color)},0.15);color:${subjInfo.color}">
+        ${subjInfo.name}
+      </span>
+      <span class="q-progress-text">Вопрос ${idx + 1} из ${allQuestions.length} · Отвечено: ${answeredCount}</span>
+    </div>
+    <div class="question-card">
+      <div class="question-num">Вопрос №${q.num}</div>
+  `;
+  
+  // Context if any
+  if (q.context) {
+    html += `<div class="context-box"><strong>КОНТЕКСТ</strong>${q.context}</div>`;
+  }
+  
+  html += `<div class="question-text">${q.question}</div>`;
+
+  if (q.image) {
+    html += `
+      <div class="question-image-container" style="margin: 16px 0; text-align: center;">
+        <img src="${q.image}" alt="Схема к вопросу" 
+             style="width: 80%; max-width: 500px; height: auto; border-radius: 8px;">
+      </div>
+    `;
+  }
+  
+  if (q.has_formula_images) {
+    html += `<div class="formula-notice">⚠️ Варианты ответов содержат формулы. Выберите букву правильного ответа: <strong>A / B / C / D</strong></div>`;
+    html += renderFormulaOptions(q, idx);
+  } else if (q.type === 'matching') {
+    html += renderMatchingOptions(q, idx);
+  } else if (q.type === 'multi') {
+    html += renderMultiOptions(q, idx);
+  } else {
+    html += renderSingleOptions(q, idx);
+  }
+  
+  html += `</div>`;
+  
+  // Topic tag
+  html += `<div style="margin-bottom:16px"><span class="topic-tag">📚 ${q.topic}</span></div>`;
+  
+  // Nav
+  html += `<div class="nav-bar">`;
+  if (idx > 0) {
+    html += `<button class="btn-nav" onclick="goToQuestion(${idx - 1})">← Назад</button>`;
+  }
+  if (!isLast) {
+    html += `<button class="btn-nav btn-next" onclick="goToQuestion(${idx + 1})">Далее →</button>`;
+  } else {
+    html += `<button class="btn-nav btn-finish" onclick="confirmFinish()">✓ Завершить тест</button>`;
+  }
+  html += `</div>`;
+  
+  document.getElementById('questionArea').innerHTML = html;
+  if (window.MathJax) {
+    MathJax.typesetPromise();
+  }
+}
+
+function renderSingleOptions(q, globalIdx) {
+  const current = answers[globalIdx];
+  let html = `<div class="options-list">`;
+  q.parsed_options.forEach(opt => {
+    const selected = current === opt.letter;
+    html += `
+      <div class="option-item ${selected ? 'selected' : ''}" onclick="selectSingle(${globalIdx}, '${opt.letter}')">
+        <div class="opt-letter">${opt.letter}</div>
+        <div class="opt-text">${opt.text || '(формула)'}</div>
+      </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderFormulaOptions(q, globalIdx) {
+  const current = answers[globalIdx];
+  const letters = q.parsed_options.map(o => o.letter).filter(Boolean);
+  let html = `<div class="options-list">`;
+  letters.forEach(letter => {
+    const selected = current === letter;
+    html += `
+      <div class="option-item ${selected ? 'selected' : ''}" onclick="selectSingle(${globalIdx}, '${letter}')">
+        <div class="opt-letter">${letter}</div>
+        <div class="opt-text" style="color:var(--text2);font-style:italic">Вариант ${letter}</div>
+      </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderMultiOptions(q, globalIdx) {
+  const current = answers[globalIdx] || [];
+  // Проверяем, достигнут ли лимит в 3 ответа
+  const isMax = current.length >= 3;
+  
+  let html = `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">
+                Выберите правильные варианты (максимум 3)
+              </div>`;
+  
+  // Добавляем класс max-reached, если лимит исчерпан
+  html += `<div class="options-list ${isMax ? 'max-reached' : ''}">`;
+  
+  q.parsed_options.forEach(opt => {
+    const selected = current.includes(opt.letter);
+    html += `
+      <div class="option-item ${selected ? 'multi-selected' : ''}" 
+           onclick="selectMulti(${globalIdx}, '${opt.letter}')">
+        <div class="opt-letter">${opt.letter}</div>
+        <div class="opt-text">${opt.text || '(формула)'}</div>
+      </div>`;
+  });
+  
+  html += `</div>`;
+  return html;
+}
+
+function renderMatchingOptions(q, globalIdx) {
+  const current = answers[globalIdx] || {};
+
+  // 1. УБИРАЕМ ДУБЛИРОВАНИЕ: 
+  // Если q.question уже выводится основным кодом рендеринга, 
+  // здесь мы НЕ добавляем его в html. Оставляем только пустой контейнер.
+  let html = `<div class="matching-inputs">`;
+  
+  // Парсим правильный ответ, чтобы понять количество строк (например, "1 – B \n2 – A")
+  const correctText = q.correct || '';
+  const rows = correctText.split('\n').filter(r => r.trim() && !r.includes('балл'));
+  
+  // Определяем количество строк для выбора
+  const numItems = rows.length > 0 ? rows.length : 2;
+  
+  for (let i = 0; i < numItems; i++) {
+    // Извлекаем метку (например, "1" из "1 - B")
+    const rowLabel = rows[i] ? rows[i].split(/[–\-]|[)]/)[0].trim() : String(i + 1);
+    const savedVal = current[rowLabel] || '';
+
+    html += `<div class="matching-row" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+      <span class="matching-label" style="font-weight: bold; min-width: 25px;">${rowLabel})</span>
+      <select class="matching-select" 
+              style="background: #1e212a; color: white; border: 1px solid #3f4451; padding: 5px; border-radius: 5px;"
+              onchange="selectMatching(${globalIdx}, '${rowLabel}', this.value)">
+        <option value="">—</option>
+        <option value="A" ${savedVal==='A'?'selected':''}>A</option>
+        <option value="B" ${savedVal==='B'?'selected':''}>B</option>
+        <option value="C" ${savedVal==='C'?'selected':''}>C</option>
+        <option value="D" ${savedVal==='D'?'selected':''}>D</option>
+      </select>
+    </div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// ==================== ANSWER HANDLERS ====================
+function selectSingle(globalIdx, letter) {
+  answers[globalIdx] = letter;
+  renderQuestion(globalIdx);
+}
+
+function selectMulti(globalIdx, letter) {
+  let current = answers[globalIdx] || [];
+  
+  if (current.includes(letter)) {
+    // Если уже выбрано — убираем
+    current = current.filter(l => l !== letter);
+  } else {
+    // Если еще не выбрано — ПРОВЕРЯЕМ ЛИМИТ (не более 3)
+    if (current.length < 3) {
+      current = [...current, letter];
+    } else {
+      // Можно ничего не выводить, просто игнорировать клик
+      return; 
+    }
+  }
+  
+  answers[globalIdx] = current.length > 0 ? current : undefined;
+  renderQuestion(globalIdx);
+}
+
+function selectMatching(globalIdx, rowLabel, value) {
+  let current = answers[globalIdx] || {};
+  current = { ...current, [rowLabel]: value };
+  answers[globalIdx] = current;
+  updateSidebar();
+}
+
+function goToQuestion(idx) {
+  if (idx < 0 || idx >= allQuestions.length) return;
+  renderQuestion(idx);
+  window.scrollTo({ top: 0 });
+}
+
+// ==================== FINISH ====================
+function confirmFinish() {
+  const unanswered = allQuestions.length - Object.keys(answers).length;
+  const modalText = unanswered > 0
+    ? `У вас есть <strong>${unanswered} неотвеченных вопросов</strong>. Пустые ответы не будут засчитаны.`
+    : 'Вы ответили на все вопросы. Готовы завершить?';
+  document.getElementById('modalText').innerHTML = modalText;
+  document.getElementById('finishModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('finishModal').classList.remove('show');
+}
+
+function finishTest() {
+  closeModal();
+  clearInterval(timerInterval);
+  document.getElementById('timerDisplay').style.display = 'none';
+  showScreen('resultsScreen');
+  renderResults();
+
+  // ← Автоматическая отправка сразу после показа результатов
+  setTimeout(sendResultsToTelegram, 800);
+}
+
+// ==================== RESULTS ====================
+function renderResults() {
+  const elapsed = totalSeconds;
+  const m = Math.floor(elapsed / 60), s = elapsed % 60;
+  const timeStr = `${pad(m)}:${pad(s)}`;
+  
+  // Calculate scores per subject
+  const subjectResults = {};
+  let globalIdx = 0;
+  
+  testSubjects.forEach(subj => {
+    const qs = QUESTIONS[subj] || [];
+    subjectResults[subj] = {
+      name: SUBJECT_INFO[subj].name,
+      color: SUBJECT_INFO[subj].color,
+      total: 0,
+      maxTotal: 0,
+      topics: {}
+    };
+    
+    qs.forEach(q => {
+      const userAnswer = answers[globalIdx];
+      const maxPoints = parseInt(q.points) || 1;
+      
+      if (!subjectResults[subj].topics[q.topic]) {
+        subjectResults[subj].topics[q.topic] = { earned: 0, max: 0 };
+      }
+      subjectResults[subj].maxTotal += maxPoints;
+      subjectResults[subj].topics[q.topic].max += maxPoints;
+      
+      let earned = 0;
+      if (userAnswer !== undefined) {
+        earned = scoreAnswer(q, userAnswer, maxPoints);
+      }
+      
+      subjectResults[subj].total += earned;
+      subjectResults[subj].topics[q.topic].earned += earned;
+      globalIdx++;
+    });
+  });
+  
+  const totalEarned = Object.values(subjectResults).reduce((s, r) => s + r.total, 0);
+  const totalMax = Object.values(subjectResults).reduce((s, r) => s + r.maxTotal, 0);
+  const answeredCount = Object.keys(answers).length;
+  globalSubjectResults = subjectResults; // ← сохраняем результаты по предметам глобально
+
+  // Сохраняем в глобальные переменные для отправки в Telegram
+  globalTimeStr = timeStr;
+  globalTotalEarned = totalEarned;
+  globalTotalMax = totalMax;
+  globalAnsweredCount = answeredCount;
+
+  const studentName = window.userInfo?.name || 'Ученик';
+
+  let html = `
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div class="results-title" style="margin: 0;">Результаты теста 🎯</div>
+    <div style="
+      font-size: 18px;
+      font-weight: 600;
+      color: #4f8ef7;
+      background: rgba(79,142,247,0.12);
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(79,142,247,0.25);
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(79,142,247,0.15);
+    ">
+      ${studentName}
+    </div>
+  </div>
+
+  <div class="results-sub">
+    Время: ${timeStr} · Отвечено: ${answeredCount} из ${allQuestions.length}
+  </div>
+  
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-num" style="color:var(--accent)">${totalEarned}/${totalMax}</div>
+      <div class="summary-label">Итого баллов</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num" style="color:var(--green)">${Math.round(totalEarned/totalMax*100)}%</div>
+      <div class="summary-label">Процент</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num" style="color:var(--yellow)">${answeredCount}</div>
+      <div class="summary-label">Ответов дано</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num">${timeStr}</div>
+      <div class="summary-label">Время</div>
+    </div>
+  </div>
+`;
+  
+  // Per-subject breakdown
+  testSubjects.forEach(subj => {
+    const r = subjectResults[subj];
+    const pct = r.maxTotal > 0 ? r.total / r.maxTotal : 0;
+    const fillClass = pct >= 0.8 ? 'fill-green' : pct >= 0.6 ? 'fill-blue' : pct >= 0.4 ? 'fill-yellow' : 'fill-red';
+    const scoreClass = pct >= 0.8 ? 'score-perfect' : pct >= 0.6 ? 'score-good' : pct >= 0.4 ? 'score-avg' : 'score-low';
+    
+    html += `<div class="subject-result">
+      <div class="subject-result-header">
+        <div class="subject-result-name" style="color:${r.color}">${r.name}</div>
+        <div>
+          <span class="score-badge ${scoreClass}">${r.total}</span>
+          <span class="score-fraction">/${r.maxTotal} баллов</span>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill ${fillClass}" style="width:${Math.round(pct*100)}%"></div>
+      </div>
+      <div class="topics-breakdown">
+        <div class="topics-title">Разбивка по темам</div>`;
+    
+    Object.entries(r.topics).forEach(([topic, t]) => {
+      const tPct = t.max > 0 ? t.earned / t.max : 0;
+      const tClass = tPct >= 0.8 ? 'score-perfect' : tPct >= 0.6 ? 'score-good' : tPct >= 0.4 ? 'score-avg' : 'score-low';
+      html += `<div class="topic-row">
+        <span class="topic-name">${topic}</span>
+        <div class="topic-mini-bar"><div class="topic-mini-fill" style="width:${Math.round(tPct*100)}%;background:${r.color}"></div></div>
+        <span class="topic-score ${tClass}">${t.earned}/${t.max}</span>
+      </div>`;
+    });
+    
+    html += `</div></div>`;
+  });
+  
+  html += `<button class="btn-restart" onclick="restartTest()">← Начать заново</button>`;
+  
+  document.getElementById('resultsContent').innerHTML = html;
+}
+
+function scoreAnswer(q, userAnswer, maxPoints) {
+  if (q.type === 'single' || !q.type) {
+    // Single choice: compare letter
+    const correct = q.correct_letters[0];
+    const userLetter = typeof userAnswer === 'string' ? userAnswer.toUpperCase() : '';
+    // Normalize both - handle Cyrillic letters that look like Latin
+    const norm = s => s ? s.replace(/С/g,'C').replace(/В/g,'B').replace(/А/g,'A').replace(/с/g,'C').replace(/в/g,'B').replace(/а/g,'A').toUpperCase() : '';
+    return norm(userLetter) === norm(correct) ? maxPoints : 0;
+  }
+  
+  if (q.type === 'multi') {
+    // userAnswer — это массив, например ["A", "D", "F"]
+    if (!userAnswer || !Array.isArray(userAnswer) || userAnswer.length === 0) return 0;
+
+    const correctLetters = q.correct_letters || [];
+    let correctCount = 0;
+    let wrongCount = 0;
+
+    userAnswer.forEach(letter => {
+      if (correctLetters.includes(letter)) {
+        correctCount++;
+      } else {
+        wrongCount++;
+      }
+    });
+
+    // Логика баллов:
+    // 1. Если 2 или более неверных — 0 баллов
+    if (wrongCount >= 2) return 0;
+
+    // 2. Если 3 верных и 0 неверных — 2 балла
+    if (correctCount === 3 && wrongCount === 0) return 2;
+
+    // 3. Если от 1 до 2 верных (при условии, что неверных < 2) — 1 балл
+    // Это покрывает случаи: (1 верный + 0 неверных), (1 верный + 1 неверный), 
+    // (2 верных + 0 неверных), (2 верных + 1 неверный)
+    if (correctCount >= 1) return 1;
+
+    return 0;
+  }
+  
+  if (q.type === 'matching') {
+    if (!userAnswer || typeof userAnswer !== 'object') return 0;
+
+    const correctText = q.correct_letters[0] || ''; // ← меняем здесь
+    const correctPairs = correctText.split('\n').filter(line => line.trim());
+    let correctCount = 0;
+
+    correctPairs.forEach(pair => {
+      const parts = pair.split(/[–\-)]/).map(s => s.trim());
+      const key = parts[0];
+      const val = parts[1];
+      if (userAnswer[key] === val) correctCount++;
+    });
+
+    if (correctCount === 2) return 2;
+    if (correctCount === 1) return 1;
+    return 0;
+  }
+  
+  return 0;
+}
+
+// ==================== UTILS ====================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function restartTest() {
+  selectedVariant = null;
+  showScreen('welcomeScreen');
+  document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('startBtn').disabled = true;
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+// Показать экран ввода данных после выбора варианта
+function showUserInfoScreen() {
+  showScreen('userInfoScreen');
+  checkContinueButton(); // сразу проверить, активна ли кнопка
+}
+
+// Вернуться к выбору вариантов
+function backToVariants() {
+  showScreen('welcomeScreen');
+  document.getElementById('continueBtn').disabled = true;
+}
+
+// Проверка заполненности полей → активация кнопки "Продолжить"
+function checkContinueButton() {
+  const name = document.getElementById('studentName').value.trim();
+  const phone = document.getElementById('phoneNumber').value.trim();
+  const continueBtn = document.getElementById('continueBtn');
+
+  continueBtn.disabled = !(name.length > 3 && phone.length > 6);
+}
+
+// Слушатели ввода
+document.getElementById('studentName').addEventListener('input', checkContinueButton);
+document.getElementById('phoneNumber').addEventListener('input', checkContinueButton);
+
+// Запуск теста после ввода данных
+function startAfterUserInfo() {
+  const studentName = document.getElementById('studentName').value.trim();
+  const phoneRaw = document.getElementById('phoneNumber').value.replace(/\D/g, '');
+  const phoneFormatted = document.getElementById('phoneNumber').value;
+
+  // Сохраняем оба варианта: чистый и красивый
+  window.userInfo = {
+    name: studentName,
+    phone: phoneFormatted,
+    phoneRaw: phoneRaw
+  };
+
+  console.log("Ученик:", studentName, "Телефон:", phoneFormatted, "(чистый:", phoneRaw, ")");
+
+  // Переходим к тесту
+  startTest();
+}
+
+// Маска для номера телефона +7 (XXX) XXX-XX-XX
+document.getElementById('phoneNumber').addEventListener('input', function (e) {
+  let value = e.target.value.replace(/\D/g, ''); // оставляем только цифры
+
+  // Если начинается не с 7 — добавляем +7
+  if (value.length > 0 && value[0] !== '7') {
+    value = '7' + value;
+  }
+
+  // Ограничиваем до 11 цифр (+7 и 10 цифр номера)
+  if (value.length > 11) {
+    value = value.slice(0, 11);
+  }
+
+  // Форматируем
+  let formatted = '+7';
+  if (value.length > 1) {
+    formatted += ' (' + value.slice(1, 4);
+  }
+  if (value.length > 4) {
+    formatted += ') ' + value.slice(4, 7);
+  }
+  if (value.length > 7) {
+    formatted += '-' + value.slice(7, 9);
+  }
+  if (value.length > 9) {
+    formatted += '-' + value.slice(9, 11);
+  }
+
+  e.target.value = formatted;
+});
+
+// Валидация и активация кнопки "Продолжить"
+function checkContinueButton() {
+  const nameInput = document.getElementById('studentName');
+  const phoneInput = document.getElementById('phoneNumber');
+  const continueBtn = document.getElementById('continueBtn');
+
+  const name = nameInput.value.trim();
+  const phone = phoneInput.value.replace(/\D/g, ''); // только цифры
+
+  // ФИО: минимум 2 слова (проверяем по пробелам)
+  const nameWords = name.split(/\s+/).filter(word => word.length > 0);
+  const nameValid = nameWords.length >= 2 && name.length > 5;
+
+  // Телефон: ровно 11 цифр (7 + 10 цифр номера)
+  const phoneValid = phone.length === 11 && phone.startsWith('7');
+
+  continueBtn.disabled = !(nameValid && phoneValid);
+
+  // Визуальная обратная связь (опционально)
+  nameInput.style.borderColor = nameValid ? 'var(--green)' : name.length > 0 ? 'var(--red)' : 'var(--border)';
+  phoneInput.style.borderColor = phoneValid ? 'var(--green)' : phone.length > 0 ? 'var(--red)' : 'var(--border)';
+}
+
+// Привязываем проверку на ввод и фокус
+['studentName', 'phoneNumber'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', checkContinueButton);
+  el.addEventListener('blur', checkContinueButton); // проверка при уходе с поля
+});
+
+// Запуск проверки при открытии экрана
+function showUserInfoScreen() {
+  showScreen('userInfoScreen');
+  checkContinueButton(); // сразу проверить
+}
+
+// Автоматическая отправка результатов в Telegram-группу
+async function sendResultsToTelegram() {
+  try {
+    const name = window.userInfo?.name || 'Ученик';
+    const phone = window.userInfo?.phone || 'Не указан';
+
+    const resultsElement = document.getElementById('resultsContent');
+    
+    // 1. Создаем скриншот с ПОВЫШЕННЫМ качеством
+    const canvas = await html2canvas(resultsElement, {
+      backgroundColor: '#0f1117',
+      scale: 3, // Увеличили с 2 до 3 для идеальной четкости
+      useCORS: true,
+      logging: false,
+      // Убираем явное указание ширины/высоты окна, чтобы html2canvas сам вычислил размер контента
+      scrollX: 0,
+      scrollY: -window.scrollY,
+    });
+
+    // 2. Превращаем в Blob
+    const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+
+    const botToken = '8791571555:AAFi3cOD9J_WT-573lzDNyrGxQDMQwFBQjE'; 
+    const chatId = -1003606584661; // ID вашей TG-группы (убедитесь, что бот добавлен в группу и имеет права на отправку сообщений)
+
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    
+    // МЕНЯЕМ поле на 'document'
+    formData.append('document', imageBlob, `Результат_${name}.png`);
+    
+    // Текст подписи
+    const caption = `📊 *Результаты ЕНТ*\n👤 Ученик: ${name}\n📞 Телефон: ${phone}\n⏳ Время: ${globalTimeStr || '00:00'}\n🏆 Баллы: ${globalTotalEarned}/${globalTotalMax}`;
+    formData.append('caption', caption);
+    formData.append('parse_mode', 'Markdown');
+
+    // МЕНЯЕМ метод на sendDocument
+    const url = `https://api.telegram.org/bot${botToken}/sendDocument`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
+      console.log('✅ Результат отправлен как документ (без потери качества)');
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Ошибка TG:', response.status, errorText);
+    }
+  } catch (e) {
+    console.error('❌ Ошибка при создании документа:', e);
+  }
+}
+// ==================== INIT ====================
+
+</script>
+</body>
+</html>
