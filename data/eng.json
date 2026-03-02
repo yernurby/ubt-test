@@ -413,7 +413,7 @@
     "correct_letters": ["A", "C"],
     "points": "2",
     "topic": "Present Perfect vs Past Simple",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -431,7 +431,7 @@
     "correct_letters": ["A", "C"],
     "points": "2",
     "topic": "Conditionals",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -449,7 +449,7 @@
     "correct_letters": ["A", "C"],
     "points": "2",
     "topic": "Passive voice",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -467,7 +467,7 @@
     "correct_letters": ["A", "C"],
     "points": "2",
     "topic": "Comparative adjectives",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -485,7 +485,7 @@
     "correct_letters": ["A", "B"],
     "points": "2",
     "topic": "Prepositions",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -503,7 +503,7 @@
     "correct_letters": ["A", "B"],
     "points": "2",
     "topic": "Modal verbs",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -521,7 +521,7 @@
     "correct_letters": ["A", "C"],
     "points": "2",
     "topic": "Reported speech",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -539,7 +539,7 @@
     "correct_letters": ["A", "B"],
     "points": "2",
     "topic": "Countable and uncountable nouns",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -557,7 +557,7 @@
     "correct_letters": ["A", "B"],
     "points": "2",
     "topic": "Articles",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -575,7 +575,7 @@
     "correct_letters": ["A", "B"],
     "points": "2",
     "topic": "Future tenses",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -593,7 +593,7 @@
     "correct_letters": ["A", "B"],
     "points": "2",
     "topic": "Vocabulary. Synonyms.",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -611,7 +611,7 @@
     "correct_letters": ["A", "B"],
     "points": "2",
     "topic": "Vocabulary. Antonyms.",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -629,7 +629,7 @@
     "correct_letters": ["A", "B"],
     "points": "2",
     "topic": "Vocabulary. Collocations.",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -647,7 +647,7 @@
     "correct_letters": ["A", "B"],
     "points": "2",
     "topic": "Irregular verbs",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   },
@@ -665,7 +665,7 @@
     "correct_letters": ["A", "C"],
     "points": "2",
     "topic": "Present Perfect",
-    "type": "multi",
+    "type": "multi_eng",
     "has_formula_images": false,
     "context": ""
   }
