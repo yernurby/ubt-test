@@ -278,6 +278,14 @@
     margin-bottom: 24px;
     white-space: pre-line;
   }
+  .question-text img,
+  .question-card img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 12px auto;
+    border-radius: 8px;
+  }
   .context-box {
     background: rgba(124,92,252,0.07);
     border-left: 3px solid var(--accent2);
@@ -1069,14 +1077,13 @@ function renderFormulaOptions(q, globalIdx) {
 
 function renderMultiOptions(q, globalIdx) {
   const current = answers[globalIdx] || [];
-  // Проверяем, достигнут ли лимит в 3 ответа
-  const isMax = current.length >= 3;
+  const maxSelect = q.correct_letters.length; // 2 или 3 — динамически
+  const isMax = current.length >= maxSelect;
   
   let html = `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">
-                Выберите правильные варианты (максимум 3)
+                Выберите правильные варианты (максимум ${maxSelect})
               </div>`;
   
-  // Добавляем класс max-reached, если лимит исчерпан
   html += `<div class="options-list ${isMax ? 'max-reached' : ''}">`;
   
   q.parsed_options.forEach(opt => {
@@ -1138,18 +1145,17 @@ function selectSingle(globalIdx, letter) {
 }
 
 function selectMulti(globalIdx, letter) {
+  const q = allQuestions[globalIdx].question;
+  const maxSelect = q.correct_letters.length; // динамический лимит
   let current = answers[globalIdx] || [];
   
   if (current.includes(letter)) {
-    // Если уже выбрано — убираем
     current = current.filter(l => l !== letter);
   } else {
-    // Если еще не выбрано — ПРОВЕРЯЕМ ЛИМИТ (не более 3)
-    if (current.length < 3) {
+    if (current.length < maxSelect) {
       current = [...current, letter];
     } else {
-      // Можно ничего не выводить, просто игнорировать клик
-      return; 
+      return;
     }
   }
   
@@ -1341,13 +1347,14 @@ function scoreAnswer(q, userAnswer, maxPoints) {
   }
   
   if (q.type === 'multi') {
-    // userAnswer — это массив, например ["A", "D", "F"]
     if (!userAnswer || !Array.isArray(userAnswer) || userAnswer.length === 0) return 0;
-
+  
     const correctLetters = q.correct_letters || [];
+    const totalCorrect = correctLetters.length; // сколько правильных всего (2 или 3)
+    
     let correctCount = 0;
     let wrongCount = 0;
-
+  
     userAnswer.forEach(letter => {
       if (correctLetters.includes(letter)) {
         correctCount++;
@@ -1355,20 +1362,21 @@ function scoreAnswer(q, userAnswer, maxPoints) {
         wrongCount++;
       }
     });
-
-    // Логика баллов:
-    // 1. Если 2 или более неверных — 0 баллов
-    if (wrongCount >= 2) return 0;
-
-    // 2. Если 3 верных и 0 неверных — 2 балла
-    if (correctCount === 3 && wrongCount === 0) return 2;
-
-    // 3. Если от 1 до 2 верных (при условии, что неверных < 2) — 1 балл
-    // Это покрывает случаи: (1 верный + 0 неверных), (1 верный + 1 неверный), 
-    // (2 верных + 0 неверных), (2 верных + 1 неверный)
-    if (correctCount >= 1) return 1;
-
-    return 0;
+  
+    if (totalCorrect === 3) {
+      // Логика для 3 правильных
+      if (correctCount === 3 && wrongCount === 0) return 2;
+      if (correctCount >= 2 && wrongCount === 0) return 1;
+      if (correctCount >= 1 && wrongCount === 0) return 1;
+      if (correctCount === 2 && wrongCount === 1) return 1;
+      return 0;
+    } else {
+      // Логика для 2 правильных (английский и другие)
+      if (correctCount === 2 && wrongCount === 0) return 2;
+      if (correctCount === 1 && wrongCount === 0) return 1;
+      if (correctCount === 2 && wrongCount === 1) return 1;
+      return 0;
+    }
   }
   
   if (q.type === 'matching') {
