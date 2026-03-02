@@ -1224,7 +1224,10 @@ function finishTest() {
   renderResults();
 
   // ← Автоматическая отправка сразу после показа результатов
-  setTimeout(sendResultsToTelegram, 800);
+  setTimeout(() => {
+    sendResultsToTelegram();
+    sendAnswersToTelegram(); // ← добавь эту строку
+  }, 800);
 }
 
 // ==================== RESULTS ====================
@@ -1767,6 +1770,186 @@ async function sendResultsToTelegram() {
     }
   } catch (e) {
     console.error('❌ Ошибка при отправке:', e);
+  }
+}
+
+async function sendAnswersToTelegram() {
+  try {
+    const name = window.userInfo?.name || 'Ученик';
+    const phone = window.userInfo?.phone || 'Не указан';
+
+    let questionsHtml = '';
+    let globalIdx = 0;
+
+    testSubjects.forEach(subj => {
+      const subjInfo = SUBJECT_INFO[subj];
+      const qs = QUESTIONS[subj] || [];
+
+      questionsHtml += `
+        <div style="margin: 32px 0 16px;">
+          <div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;
+                      color:${subjInfo.color};letter-spacing:1px;text-transform:uppercase;
+                      padding-bottom:8px;border-bottom:2px solid ${subjInfo.color}33;">
+            ${subjInfo.name}
+          </div>
+        </div>`;
+
+      qs.forEach(q => {
+        const userAnswer = answers[globalIdx];
+        const earned = userAnswer !== undefined ? scoreAnswer(q, userAnswer, parseInt(q.points) || 1) : 0;
+        const maxPts = parseInt(q.points) || 1;
+        const isCorrect = earned === maxPts;
+        const isPartial = earned > 0 && earned < maxPts;
+        const borderColor = isCorrect ? '#22d3a5' : isPartial ? '#f5c842' : '#f04f5a';
+        const statusIcon = isCorrect ? '✅' : isPartial ? '⚡' : (userAnswer === undefined ? '⬜' : '❌');
+        const statusText = isCorrect ? 'Верно' : isPartial ? 'Частично' : (userAnswer === undefined ? 'Без ответа' : 'Неверно');
+        const statusColor = isCorrect ? '#22d3a5' : isPartial ? '#f5c842' : (userAnswer === undefined ? '#8b91a8' : '#f04f5a');
+
+        // Форматируем ответ ученика
+        let userAnswerText = '—';
+        if (userAnswer !== undefined) {
+          if (Array.isArray(userAnswer)) {
+            userAnswerText = userAnswer.join(', ');
+          } else if (typeof userAnswer === 'object') {
+            userAnswerText = Object.entries(userAnswer).map(([k,v]) => `${k}→${v}`).join(', ');
+          } else {
+            userAnswerText = userAnswer;
+          }
+        }
+
+        // Форматируем правильный ответ
+        const correctAnswerText = q.correct_letters.join(', ');
+
+        // Варианты ответов (только если не формула)
+        let optionsHtml = '';
+        if (!q.has_formula_images && q.parsed_options && q.parsed_options.length > 0) {
+          q.parsed_options.forEach(opt => {
+            const isUserChoice = Array.isArray(userAnswer)
+              ? userAnswer.includes(opt.letter)
+              : userAnswer === opt.letter;
+            const isCorrectOpt = q.correct_letters.includes(opt.letter);
+
+            let optBg = 'transparent';
+            let optBorder = '#2a3045';
+            let optColor = '#8b91a8';
+
+            if (isCorrectOpt) { optBg = 'rgba(34,211,165,0.1)'; optBorder = '#22d3a5'; optColor = '#22d3a5'; }
+            if (isUserChoice && !isCorrectOpt) { optBg = 'rgba(240,79,90,0.1)'; optBorder = '#f04f5a'; optColor = '#f04f5a'; }
+            if (isUserChoice && isCorrectOpt) { optBg = 'rgba(34,211,165,0.15)'; optBorder = '#22d3a5'; optColor = '#22d3a5'; }
+
+            if (opt.letter && opt.text) {
+              optionsHtml += `
+                <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;
+                            border-radius:8px;border:1px solid ${optBorder};background:${optBg};margin-bottom:6px;">
+                  <span style="font-weight:700;color:${optColor};min-width:20px;">${opt.letter}</span>
+                  <span style="color:${optColor};font-size:13px;">${opt.text}</span>
+                  ${isCorrectOpt ? '<span style="margin-left:auto;color:#22d3a5;font-size:11px;">✓ верный</span>' : ''}
+                  ${isUserChoice && !isCorrectOpt ? '<span style="margin-left:auto;color:#f04f5a;font-size:11px;">✗ выбран</span>' : ''}
+                </div>`;
+            }
+          });
+        }
+
+        questionsHtml += `
+          <div style="background:#181c26;border:1px solid ${borderColor}44;border-left:3px solid ${borderColor};
+                      border-radius:12px;padding:20px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px;">
+              <div style="font-size:11px;color:#8b91a8;font-weight:600;">№${q.num} · ${q.topic}</div>
+              <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+                <span>${statusIcon}</span>
+                <span style="color:${statusColor};font-size:12px;font-weight:600;">${statusText}</span>
+                <span style="color:#8b91a8;font-size:12px;">${earned}/${maxPts}</span>
+              </div>
+            </div>
+            <div style="font-size:14px;font-weight:500;color:#e8eaf0;margin-bottom:14px;line-height:1.6;white-space:pre-line;">${q.question}</div>
+            ${optionsHtml ? `<div style="margin-bottom:12px;">${optionsHtml}</div>` : ''}
+            <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;padding-top:10px;border-top:1px solid #2a3045;">
+              <div><span style="color:#8b91a8;">Ответ ученика: </span><strong style="color:${statusColor}">${userAnswerText}</strong></div>
+              <div><span style="color:#8b91a8;">Правильный: </span><strong style="color:#22d3a5">${correctAnswerText}</strong></div>
+            </div>
+          </div>`;
+
+        globalIdx++;
+      });
+    });
+
+    const totalPct = globalTotalMax > 0 ? Math.round(globalTotalEarned / globalTotalMax * 100) : 0;
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ответы — ${name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; color: #e8eaf0; font-family: 'Golos Text', sans-serif; padding: 32px 20px; }
+    .wrap { max-width: 860px; margin: 0 auto; }
+    .logo { font-family:'Unbounded',sans-serif;font-size:12px;font-weight:800;
+            background:linear-gradient(135deg,#4f8ef7,#7c5cfc);-webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;margin-bottom:24px; }
+    .header { display:flex;justify-content:space-between;align-items:flex-start;
+              flex-wrap:wrap;gap:16px;margin-bottom:24px; }
+    .title { font-family:'Unbounded',sans-serif;font-size:clamp(20px,4vw,28px);
+             font-weight:800;background:linear-gradient(135deg,#fff,#4f8ef7);
+             -webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+    .chips { display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px; }
+    .chip { background:#181c26;border:1px solid #2a3045;border-radius:8px;
+            padding:8px 14px;font-size:13px; }
+    .chip span { color:#8b91a8; }
+    .legend { display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;font-size:13px; }
+    .legend-item { display:flex;align-items:center;gap:6px;color:#8b91a8; }
+    .footer { text-align:center;color:#2a3045;font-size:11px;margin-top:40px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">WEGLOBAL · ЕНТ</div>
+    <div class="header">
+      <div>
+        <div class="title">Ответы ученика 📝</div>
+        <div style="color:#8b91a8;margin-top:6px;font-size:14px;">Детальный разбор всех вопросов</div>
+      </div>
+      <div style="background:#181c26;border:1px solid #2a3045;border-radius:12px;padding:16px 20px;text-align:center;">
+        <div style="font-family:'Unbounded',sans-serif;font-size:22px;font-weight:800;color:#4f8ef7;">${globalTotalEarned}/${globalTotalMax}</div>
+        <div style="font-size:12px;color:#8b91a8;">${totalPct}% · ${globalTimeStr}</div>
+      </div>
+    </div>
+    <div class="chips">
+      <div class="chip"><span>Ученик: </span><strong>${name}</strong></div>
+      <div class="chip"><span>Телефон: </span><strong>${phone}</strong></div>
+      <div class="chip"><span>Ответов: </span><strong>${globalAnsweredCount}/${allQuestions.length}</strong></div>
+    </div>
+    <div class="legend">
+      <div class="legend-item">✅ <span>Верно</span></div>
+      <div class="legend-item">⚡ <span>Частично верно</span></div>
+      <div class="legend-item">❌ <span>Неверно</span></div>
+      <div class="legend-item">⬜ <span>Без ответа</span></div>
+    </div>
+    ${questionsHtml}
+    <div class="footer">WEGLOBAL · ${new Date().toLocaleDateString('ru-RU')}</div>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const botToken = '8791571555:AAFi3cOD9J_WT-573lzDNyrGxQDMQwFBQjE';
+    const chatId = -1003606584661;
+
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('document', blob, `Ответы_${name}_${new Date().toLocaleDateString('ru-RU')}.html`);
+    formData.append('caption', `📝 Ответы ученика: ${name}`);
+
+    await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+      method: 'POST',
+      body: formData
+    });
+
+    console.log('✅ Ответы отправлены');
+  } catch (e) {
+    console.error('❌ Ошибка при отправке ответов:', e);
   }
 }
 // ==================== INIT ====================
