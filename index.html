@@ -1776,7 +1776,6 @@ async function sendResultsToTelegram() {
 async function imageToBase64(src) {
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     
     img.onload = () => {
       const canvas = document.createElement('canvas');
@@ -1796,9 +1795,11 @@ async function imageToBase64(src) {
       console.warn('Картинка не загрузилась:', src);
       resolve(null);
     };
-    
-    // Используем абсолютный путь относительно текущей страницы
-    img.src = src.startsWith('http') ? src : (window.location.href.replace(/\/[^/]*$/, '/') + src);
+
+    // Строим правильный абсолютный путь
+    const base = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/');
+    img.src = base + src;
+    console.log('Загружаю картинку:', img.src);
   });
 }
 
