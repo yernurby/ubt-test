@@ -1774,21 +1774,32 @@ async function sendResultsToTelegram() {
 }
 
 async function imageToBase64(src) {
-  try {
-    console.log('Пробую загрузить:', src);
-    const response = await fetch(src);
-    console.log('Статус:', response.status, src);
-    if (!response.ok) return null;
-    const blob = await response.blob();
-    return await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-  } catch (e) {
-    console.error('Ошибка загрузки картинки:', src, e.message);
-    return null;
-  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      try {
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) {
+        console.warn('Canvas tainted:', src, e);
+        resolve(null);
+      }
+    };
+    
+    img.onerror = () => {
+      console.warn('Картинка не загрузилась:', src);
+      resolve(null);
+    };
+    
+    // Используем абсолютный путь относительно текущей страницы
+    img.src = src.startsWith('http') ? src : (window.location.href.replace(/\/[^/]*$/, '/') + src);
+  });
 }
 
 async function sendAnswersToTelegram() {
@@ -1898,14 +1909,16 @@ async function sendAnswersToTelegram() {
 
     // Встраиваем картинки как base64
     const imgRegex = /src="([^"]+\.(png|jpg|jpeg|gif|svg))"/g;
-    const matches = [...questionsHtml.matchAll(imgRegex)];
-    for (const match of matches) {
-      const src = match[1];
+    const srcList = [...new Set([...questionsHtml.matchAll(imgRegex)].map(m => m[1]))];
+    
+    for (const src of srcList) {
       const base64 = await imageToBase64(src);
       if (base64) {
-        questionsHtml = questionsHtml.replace(`src="${src}"`, `src="${base64}"`);
+        // Заменяем все вхождения этого src
+        questionsHtml = questionsHtml.split(`src="${src}"`).join(`src="${base64}"`);
+        console.log('✅ Картинка встроена:', src);
       } else {
-        console.warn('Картинка не найдена:', src);
+        console.warn('⚠️ Картинка не найдена:', src);
       }
     }
 
