@@ -1773,6 +1773,20 @@ async function sendResultsToTelegram() {
   }
 }
 
+async function imageToBase64(src) {
+  try {
+    const response = await fetch(src);
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    return null;
+  }
+}
+
 async function sendAnswersToTelegram() {
   try {
     const name = window.userInfo?.name || 'Ученик';
@@ -1805,7 +1819,6 @@ async function sendAnswersToTelegram() {
         const statusText = isCorrect ? 'Верно' : isPartial ? 'Частично' : (userAnswer === undefined ? 'Без ответа' : 'Неверно');
         const statusColor = isCorrect ? '#22d3a5' : isPartial ? '#f5c842' : (userAnswer === undefined ? '#8b91a8' : '#f04f5a');
 
-        // Форматируем ответ ученика
         let userAnswerText = '—';
         if (userAnswer !== undefined) {
           if (Array.isArray(userAnswer)) {
@@ -1817,10 +1830,8 @@ async function sendAnswersToTelegram() {
           }
         }
 
-        // Форматируем правильный ответ
         const correctAnswerText = q.correct_letters.join(', ');
 
-        // Варианты ответов (только если не формула)
         let optionsHtml = '';
         if (!q.has_formula_images && q.parsed_options && q.parsed_options.length > 0) {
           q.parsed_options.forEach(opt => {
@@ -1875,6 +1886,17 @@ async function sendAnswersToTelegram() {
 
     const totalPct = globalTotalMax > 0 ? Math.round(globalTotalEarned / globalTotalMax * 100) : 0;
 
+    // Встраиваем картинки как base64
+    const imgRegex = /src="([^"]+\.(png|jpg|jpeg|gif|svg))"/g;
+    const matches = [...questionsHtml.matchAll(imgRegex)];
+    for (const match of matches) {
+      const src = match[1];
+      const base64 = await imageToBase64(src);
+      if (base64) {
+        questionsHtml = questionsHtml.replace(`src="${src}"`, `src="${base64}"`);
+      }
+    }
+
     const htmlContent = `<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1882,6 +1904,13 @@ async function sendAnswersToTelegram() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ответы — ${name}</title>
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\\\(', '\\\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  <\/script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async><\/script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #0f1117; color: #e8eaf0; font-family: 'Golos Text', sans-serif; padding: 32px 20px; }
@@ -1895,12 +1924,12 @@ async function sendAnswersToTelegram() {
              font-weight:800;background:linear-gradient(135deg,#fff,#4f8ef7);
              -webkit-background-clip:text;-webkit-text-fill-color:transparent; }
     .chips { display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px; }
-    .chip { background:#181c26;border:1px solid #2a3045;border-radius:8px;
-            padding:8px 14px;font-size:13px; }
+    .chip { background:#181c26;border:1px solid #2a3045;border-radius:8px;padding:8px 14px;font-size:13px; }
     .chip span { color:#8b91a8; }
     .legend { display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;font-size:13px; }
     .legend-item { display:flex;align-items:center;gap:6px;color:#8b91a8; }
     .footer { text-align:center;color:#2a3045;font-size:11px;margin-top:40px; }
+    img { max-width:100%;height:auto;border-radius:8px;margin:8px 0;display:block; }
   </style>
 </head>
 <body>
