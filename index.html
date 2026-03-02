@@ -1894,6 +1894,8 @@ async function sendAnswersToTelegram() {
       const base64 = await imageToBase64(src);
       if (base64) {
         questionsHtml = questionsHtml.replace(`src="${src}"`, `src="${base64}"`);
+      } else {
+        console.warn('Картинка не найдена:', src);
       }
     }
 
