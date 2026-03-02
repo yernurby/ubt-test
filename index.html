@@ -1775,7 +1775,10 @@ async function sendResultsToTelegram() {
 
 async function imageToBase64(src) {
   try {
+    console.log('Пробую загрузить:', src);
     const response = await fetch(src);
+    console.log('Статус:', response.status, src);
+    if (!response.ok) return null;
     const blob = await response.blob();
     return await new Promise((resolve) => {
       const reader = new FileReader();
@@ -1783,6 +1786,7 @@ async function imageToBase64(src) {
       reader.readAsDataURL(blob);
     });
   } catch (e) {
+    console.error('Ошибка загрузки картинки:', src, e.message);
     return null;
   }
 }
@@ -1872,6 +1876,12 @@ async function sendAnswersToTelegram() {
                 <span style="color:#8b91a8;font-size:12px;">${earned}/${maxPts}</span>
               </div>
             </div>
+            ${q.context ? `
+            <div style="background:rgba(124,92,252,0.07);border-left:3px solid #7c5cfc;border-radius:0 8px 8px 0;
+                        padding:12px 14px;margin-bottom:14px;font-size:13px;color:#8b91a8;line-height:1.7;">
+              <strong style="color:#e8eaf0;font-size:11px;letter-spacing:1px;display:block;margin-bottom:6px;">КОНТЕКСТ</strong>
+              ${q.context}
+            </div>` : ''}
             <div style="font-size:14px;font-weight:500;color:#e8eaf0;margin-bottom:14px;line-height:1.6;white-space:pre-line;">${q.question}</div>
             ${optionsHtml ? `<div style="margin-bottom:12px;">${optionsHtml}</div>` : ''}
             <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;padding-top:10px;border-top:1px solid #2a3045;">
